@@ -11,17 +11,32 @@ import glob
 
 
 #initializing screen size and checking if the screen file exists, if not creating one
+global config
+config = []
 try:
-    with open("screen") as screen:
+    with open("config") as screen:
         string=screen.read()
+        config = string.split(";")
         print(string)
 except:
-    os.system("echo 300,300 > screen")
-    with open("screen") as screen:
+    os.system("echo screen:300,300;ppp:0;resolution:300 > config")
+    with open("config") as screen:
         string=screen.read()
+        config = string.split(";")
         print(string)
-global screen_x, screen_y
-screen_x, screen_y = string.split(",")
+global screen_x, screen_y, res_x, ppp
+
+for i in config:
+    print(i)
+    if "screen" in str(i):
+        i=(i.replace("screen:", ""))
+        screen_x, screen_y = str(i).split(",")
+    if "resolution:" in str(i):
+        i=(i.replace("resolution:", ""))
+        res_x = str(i)
+    if "ppp:" in str(i):
+        i = (i.replace("ppp:", ""))
+        ppp = str(i)
 
 #random var
 state = 0
@@ -49,8 +64,8 @@ rename.start()
 
 def main():
     try:
-        global screen_x, screen_y
-        screen_x, screen_y= int(screen_x), int(screen_y)
+        global screen_x, screen_y, res_x, ppp
+        screen_x, screen_y, res_x, ppp= int(screen_x), int(screen_y), int(res_x), float(ppp)
 
         #preparing and refactoring the image
         paused=False
@@ -63,12 +78,13 @@ def main():
 
         width, height = img.size
         new_height= height/width
-        new_height=int(new_height*250)
-        img = img.resize((250, new_height)) 
+        new_height=int(new_height*res_x)
+        img = img.resize((res_x, new_height))
 
-        for y in range(0, img.size[1], 2):    # for every col:
-            for x in range(0, img.size[0], 2):    # For every row
-                if keyboard.is_pressed('q'):  # if key 'q' is pressed 
+        for y in range(0, img.size[1], 1):    # for every col:
+            for x in range(0, img.size[0], 1):    # For every row
+                time.sleep(ppp) #make it compatible with most drawing programms
+                if keyboard.is_pressed('q'):  # cancels the drawing
                     paused=True
                 
                 if (paused):
@@ -89,11 +105,11 @@ def main():
                 #drawing the image
                 try:
                     if i < (220, 220, 220) and a > 0 and i >= (1,1,1):
-                        pyautogui.moveTo(screen_x + x, screen_y + y) # Move the mouse to the x, y coordinates 100, 150.
+                        pyautogui.moveTo(screen_x + x, screen_y + y) # Move the mouse to the pixel coordinate.
                         pyautogui.click()
                 except:
                     if i > 0:
-                        pyautogui.moveTo(screen_x + x, screen_y + y) # Move the mouse to the x, y coordinates 100, 150.
+                        pyautogui.moveTo(screen_x + x, screen_y + y) # Move the mouse to the pixel coordinate.
                         pyautogui.click()
             if (paused):
                 break
@@ -108,10 +124,10 @@ print("press pos1 to set the draw space and press q to cancel the drawing\n")
 while(True):
     try: 
         #refresh the screen position
-        if keyboard.is_pressed('pos1'):  # if key 'q' is pressed 
+        if keyboard.is_pressed('pos1'):
             screen_x, screen_y = pyautogui.position()
             print(screen_x, screen_y, state)
-            os.system("echo " + str(screen_x) +"," + str(screen_y) + "> screen")
+            os.system("echo screen:" + str(screen_x) +"," + str(screen_y) + ";ppp:"+str(ppp)+";resolution:"+str(res_x)+";" + "> config")
         time.sleep(0.1)
 
         #calling the main function
